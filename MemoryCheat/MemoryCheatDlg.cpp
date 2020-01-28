@@ -18,6 +18,11 @@
 
 CMemoryCheatDlg::CMemoryCheatDlg(CWnd* pParent /*=nullptr*/)
 	: CDialogEx(IDD_MEMORYCHEAT_DIALOG, pParent)
+	, m_strDesEdit(_T(""))
+	, m_strValueTypeEdit(_T(""))
+	, m_strValueEdit(_T(""))
+	, m_strAddressEdit(_T(""))
+	, m_strSearchValue(_T(""))
 {
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
 }
@@ -25,11 +30,28 @@ CMemoryCheatDlg::CMemoryCheatDlg(CWnd* pParent /*=nullptr*/)
 void CMemoryCheatDlg::DoDataExchange(CDataExchange* pDX)
 {
 	CDialogEx::DoDataExchange(pDX);
+	DDX_Text(pDX, IDC_EDIT_DES, m_strDesEdit);
+	DDX_Control(pDX, IDC_PROGRESS_SEARCH, m_pProcess);
+	DDX_Control(pDX, IDC_EDIT_ADDRESS, m_strAddressEdit);
+	DDX_CBString(pDX, IDC_COMBO_VALUE_TYPE2, m_strValueTypeEdit);
+	DDX_Control(pDX, IDC_COMBO_VALUE_TYPE2, m_cbbValueTypeEdit);
+	DDX_Text(pDX, IDC_EDIT_VALUE, m_strValueEdit);
+	DDX_Text(pDX, IDC_EDIT_ADDRESS, m_strAddressEdit);
+	DDX_Text(pDX, IDC_EDIT_SEARCH_VALUE, m_strSearchValue);
 }
 
 BEGIN_MESSAGE_MAP(CMemoryCheatDlg, CDialogEx)
 	ON_WM_PAINT()
 	ON_WM_QUERYDRAGICON()
+	ON_NOTIFY(LVN_ITEMCHANGED, IDC_MFCSHELLLIST1, &CMemoryCheatDlg::OnLvnItemchangedMfcshelllist1)
+	ON_BN_CLICKED(IDC_BUTTON_ADD, &CMemoryCheatDlg::OnBnClickedButtonAdd)
+	ON_BN_CLICKED(IDC_BUTTON_SAVE, &CMemoryCheatDlg::OnBnClickedButtonSave)
+	ON_BN_CLICKED(IDC_BUTTON_DEL, &CMemoryCheatDlg::OnBnClickedButtonDel)
+	ON_BN_CLICKED(IDC_BUTTON_PLANT_INJECT, &CMemoryCheatDlg::OnBnClickedButtonPlantInject)
+	ON_BN_CLICKED(IDC_BUTTON_PROCESS, &CMemoryCheatDlg::OnBnClickedButtonProcess)
+	ON_BN_CLICKED(IDC_BUTTON_FIRST, &CMemoryCheatDlg::OnBnClickedButtonFirst)
+	ON_BN_CLICKED(IDC_BUTTON_NEXT, &CMemoryCheatDlg::OnBnClickedButtonNext)
+	ON_BN_CLICKED(IDC_BUTTON_STOP, &CMemoryCheatDlg::OnBnClickedButtonStop)
 END_MESSAGE_MAP()
 
 
@@ -85,3 +107,59 @@ HCURSOR CMemoryCheatDlg::OnQueryDragIcon()
 	return static_cast<HCURSOR>(m_hIcon);
 }
 
+
+
+
+{
+	LPNMLISTVIEW pNMLV = reinterpret_cast<LPNMLISTVIEW>(pNMHDR);
+	// TODO: 在此添加控件通知处理程序代码
+	*pResult = 0;
+}
+
+
+void CMemoryCheatDlg::OnBnClickedButtonAdd()
+{
+	// TODO: 在此添加控件通知处理程序代码
+}
+
+
+void CMemoryCheatDlg::OnBnClickedButtonSave()
+{
+	// TODO: 在此添加控件通知处理程序代码
+}
+
+
+void CMemoryCheatDlg::OnBnClickedButtonDel()
+{
+	// TODO: 在此添加控件通知处理程序代码
+}
+
+
+void CMemoryCheatDlg::OnBnClickedButtonPlantInject()
+{
+	// TODO: 在此添加控件通知处理程序代码
+}
+
+
+void CMemoryCheatDlg::OnBnClickedButtonProcess()
+{
+	// TODO: 在此添加控件通知处理程序代码
+}
+
+
+void CMemoryCheatDlg::OnBnClickedButtonFirst()
+{
+	// TODO: 在此添加控件通知处理程序代码
+}
+
+
+void CMemoryCheatDlg::OnBnClickedButtonNext()
+{
+	// TODO: 在此添加控件通知处理程序代码
+}
+
+
+void CMemoryCheatDlg::OnBnClickedButtonStop()
+{
+	// TODO: 在此添加控件通知处理程序代码
+}

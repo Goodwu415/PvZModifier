@@ -59,6 +59,72 @@ public:
 			return true;
 		return false;
 	}
+	bool Read(DWORD dwAddr, unsigned char val[], size_t len)
+	{
+		if(::ReadProcessMemory(m_hProcess, (LPCVOID)dwAddr, &val[0], len, NULL))
+			return true;
+		return false;
+	}
+	//写内存
+	template<typename T>
+	bool Write(DWORD dwAddr, T val)
+	{
+		if(::WriteProcessMemory(m_hProcess, (LPVOID)dwAddr, &val, sizeof(val), nullptr))
+			return true;
+		return false;
+	}
+	bool Write(DWORD dwAddr, unsigned char code[], size_t len)
+	{
+		if(::WriteProcessMemory(m_hProcess, (LPVOID)dwAddr, &code[0], len, nullptr))
+			return true;
+		return false;
+	}
+	//调用Call
+	bool RmoteCall(unsigned char code[], size_t len, unsigned char para[], size_t paraLen)
+	{
+		if(!IsValidHandle());
+		//申请代码内存
+		PVOID mFuncAddr = ::VirtualAllocEx(m_hProcess, NULL, len, MEM_COMMIT, PAGE_EXECUTE_READWRITE);
+		if(nullptr == mFuncAddr)
+			return false;
+		//申请函数参数内存
+		PVOID ParamAddr = ::VirtualAllocEx(m_hProcess, NULL, len, MEM_COMMIT, PAGE_EXECUTE_READWRITE);
+		if(nullptr == ParamAddr)
+			return false;
+		//写入代码和参数
+		this->Write((DWORD)mFuncAddr, code, len);
+		this->Write((DWORD)ParamAddr, para, paraLen);
+		//创建远程线程
+		DWORD dwThreadId;
+		HANDLE hThread = ::CreateRemoteThread(m_hProcess, NULL, 0, (LPTHREAD_START_ROUTINE)mFuncAddr, ParamAddr, 0, &dwThreadId);
+
+		//等待执行完毕
+		if(hThread && hThread != INVALID_HANDLE_VALUE)
+		{
+			WaitForSingleObject(hThread, 1000);//等待1秒
+		}
+		//释放内存
+		VirtualFreeEx(m_hProcess, mFuncAddr, len, MEM_RELEASE);
+		VirtualFreeEx(m_hProcess, ParamAddr, paraLen, MEM_RELEASE);
+		return true;
+	}
+	//设置初次扫描的回调函数
+	virtual void SetCallbackFirst(bool(__stdcall* pGoonFirst)(void* pArgs, size_t nAddrCount, size_t index), void *pArgs)
+	{
+		m_pGoonFirst = pGoonFirst;
+		m_pArgsFirst = pArgs;
+	}
+	//设置初次以外扫描的回调函数
+	virtual void SetCallbackNext(bool(__stdcall* pGoonNext)(void* pArgs, size_t nAddrCount, size_t index), void* pArgs)
+	{
+		m_pGoonNext = pGoonNext;
+		m_pArgsNext = pArgs;
+	}
+	//获得结果
+	virtual const std::list<DWORD>& GetResults() const
+	{
+		return m_arList;
+	}
 private:
 	//查找函数
 	template<typename T>
@@ -66,8 +132,83 @@ private:
 	{
 		HANDLE hProcess = ::OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_OPERATION | PROCESS_VM_READ | PROCESS_VM_WRITE, false, dwProcessId);
 		m_hProcess = hProcess;
-
-
+		if(hProcess == NULL)
+			return false;
+		//目标值的长度
+		const size_t len = sizeof(value);
+		const void* pValue = &value;
+		MEMORY_BASIC_INFORMATION mbi;
+		DWORD dwBaseAddress = dwBegin;
+		do{
+			//如果查询内存属性失败：越过此页，进行下一页的查询
+			if(0 == VirtualQueryEx(hProcess, (LPVOID)dwBaseAddress, &mbi, sizeof(mbi)))
+			{
+				dwBaseAddress += m_dwPageSize;
+				continue;
+			}
+			//下一步的搜索地址
+			dwBaseAddress = (DWORD)mbi.BaseAddress + mbi.RegionSize;
+			//回调函数
+			if(!m_pGoonFirst || !m_pGoonFirst(m_pArgsFirst, dwEnd - dwBegin, dwBaseAddress - dwBegin))
+				return false;
+			//判断内存属性
+			if(mbi.State != MEM_COMMIT || (mbi.Protect != PAGE_READWRITE &&
+				mbi.Protect != PAGE_READONLY &&
+				mbi.Protect != PAGE_EXECUTE_READ &&
+				mbi.Protect != PAGE_EXECUTE_READWRITE))
+				//跳过未分配或不可读的区域
+				continue;
+			//读取内容
+			DWORD dwReadSize;
+			char* Buf = new char[mbi.RegionSize];
+			if(ReadProcessMemory(hProcess, (LPVOID)mbi.BaseAddress, Buf, mbi.RegionSize, &dwReadSize) == 0)
+			{
+				delete[] Buf;
+				CloseHandle(hProcess);
+				return false;
+			}
+			//搜索这块内存区域
+			{
+				DWORD dwBaseAddr = (DWORD)mbi.BaseAddress;
+				for(size_t i = 0; i < mbi.RegionSize - len; ++i)
+				{
+					void* p = &Buf[i];
+					if(memcmp(p, pValue, len) == 0)
+						m_arList.push_back(dwBaseAddr + i);
+				}
+			}
+			delete[] Buf;
+		} while(dwBaseAddress < dwEnd);
+		return true;
+	}
+	//真正的查找函数
+	template<typename T>
+	bool _FindNext(T value)
+	{
+		//目标值的长度
+		const size_t len = sizeof(value);
+		const void* pValue = &value;
+		//已存地址数量
+		size_t cnt = m_arList.size();
+		size_t index = 0;
+		std::list<DWORD> dwTemp;
+		for(auto addr : m_arList)
+		{ // 如果有回调函数,并且回调函数返回 FALSE,则退出查找
+			if(this->m_pGoonNext && !this->m_pGoonNext(this->m_pArgsNext, cnt, index++))
+				return false;
+			//处理消息
+			WaitForldle();
+			//读入内容
+			T tReadValue;
+			if(!::ReadProcessMemory(m_hProcess, (LPCVOID)addr, &tReadValue, len, NULL))
+				continue;//没有读取成功
+			//和目标值进行比较
+			if(0 == memcmp(pValue, &tReadValue, len))
+				dwTemp.push_back(addr);	//值相等，保留
+		}
+		//保存本次结果
+		m_arList = dwTemp;	
+		return !m_arList.empty();
 	}
 	//看看有没有消息，有就取出来，并分发
 	void WaitForldle()
