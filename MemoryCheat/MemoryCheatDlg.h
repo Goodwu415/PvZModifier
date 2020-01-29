@@ -6,7 +6,7 @@
 #include "afxcmn.h"
 #include "afxwin.h"
 #include "MemFinder.h"
-#include <memory>
+
 // CMemoryCheatDlg 对话框
 class CMemoryCheatDlg : public CDialogEx
 {
@@ -29,6 +29,7 @@ protected:
 
 	// 生成的消息映射函数
 	virtual BOOL OnInitDialog();
+	afx_msg void OnSysCommand(UINT nID, LPARAM lParam);
 	afx_msg void OnPaint();
 	afx_msg HCURSOR OnQueryDragIcon();
 	DECLARE_MESSAGE_MAP()

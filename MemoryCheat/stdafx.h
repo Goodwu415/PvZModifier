@@ -52,4 +52,16 @@
 #endif
 #endif
 
+#include <vector>
+#include <map>
+#include <list>
+#include <memory>
+#include <algorithm>
+#include <stack>
+#include <assert.h>
 
+#include <TlHelp32.h>
+
+
+
+#include "MemFinder.h"
