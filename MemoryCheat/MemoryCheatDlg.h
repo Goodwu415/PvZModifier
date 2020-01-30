@@ -74,6 +74,9 @@ public:
 	CString m_strValueType;
 	//搜索工具类指针
 	std::shared_ptr<CMemFinder> m_pFinder{ std::make_shared<CMemFinder>() };
+private:
+	void SetResult(const std::shared_ptr<CMemFinder> pFinder);
+
 public:
 	//当前正在操作的进程ID
 	DWORD m_dwProcessId{ 0 };
@@ -81,7 +84,6 @@ public:
 	CString m_strLimitBegin;
 	CString m_strLimitEnd;
 	void GetLimit(DWORD& dwLimitBegin, DWORD& dwLimitEnd);
-	
 	
 	//是否继续搜索
 	bool m_bGoon{ false };
