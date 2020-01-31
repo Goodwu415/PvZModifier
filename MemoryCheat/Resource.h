@@ -2,7 +2,9 @@
 // Microsoft Visual C++ 生成的包含文件。
 // 供 MemoryCheat.rc 使用
 //
+#define IDS_ABOUTBOX                    101
 #define IDD_MEMORYCHEAT_DIALOG          102
+#define IDS_STRING102                   102
 #define IDS_STRING_1BYTE                103
 #define IDS_STRING_2BYTE                104
 #define IDS_STRING_4BYTE                105
@@ -36,7 +38,7 @@
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        132
+#define _APS_NEXT_RESOURCE_VALUE        133
 #define _APS_NEXT_COMMAND_VALUE         32771
 #define _APS_NEXT_CONTROL_VALUE         1027
 #define _APS_NEXT_SYMED_VALUE           101

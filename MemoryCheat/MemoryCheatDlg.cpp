@@ -171,6 +171,10 @@ BOOL CMemoryCheatDlg::OnInitDialog()
 	return TRUE;  // 除非将焦点设置到控件，否则返回 TRUE
 }
 
+void CMemoryCheatDlg::OnSysCommand(UINT nID, LPARAM lParam)
+{
+	CDialogEx::OnSysCommand(nID, lParam);
+}
 // 如果向对话框添加最小化按钮，则需要下面的代码
 //  来绘制该图标。  对于使用文档/视图模型的 MFC 应用程序，
 //  这将由框架自动完成。
@@ -405,7 +409,7 @@ void CMemoryCheatDlg::UpdateTargetListValueByAddress()
 		//获得行数据
 		TupleTargetLineData dt = GetListTargetData(i);
 		//内存地址
-		DWORD dwAddr = get<i>(dt);
+		DWORD dwAddr = get<1>(dt);
 		CString valueType = get<2>(dt);
 		// 读取 该内存处的值
 		CString value = ReadValue(valueType, dwAddr);
@@ -563,7 +567,7 @@ void CMemoryCheatDlg::OnBnClickedButtonPlantInject()
 	FreeLibrary(h);
 }
 
-
+//显示进程列表
 void CMemoryCheatDlg::OnBnClickedButtonProcess()
 {
 	//显示进程列表对话框
@@ -672,29 +676,27 @@ void CMemoryCheatDlg::OnBnClickedButtonFirst()
 			break;
 	}
 	//如果搜索结果返回FALSE exit
-	if(bFind)
+	if(!bFind)
 	{
-		SetResult(m_pFinder);
-		//进度条清0
-		m_pProcess.SetPos(0);
+		goto __End;
 	}
-/*		goto __end;
+		
 	//设置结果内容
 	{
-		const std::list<dword>& lst = m_pfinder->getresults();
-		int index = 1024;//显示的最大数
-		for(auto addr : lst)
-		{
-			if(index-- <= 0)
+		const std::list<DWORD> &lst = m_pFinder->GetResults();
+		int index = 1024; //最多显示1024结果
+		for(auto addr : lst) {
+			if(index-- <= 0) {
 				break;
-			int index = m_lstaddresstemp.insertitem(0, _t(""));
-			cstring s;
-			s.format(_t("%08x"), addr);
-			m_lstaddresstemp.setitemtext(index, 0, s);
+			}
+			int index = m_lstAddressTemp.InsertItem(0, _T(""));
+			CString s;
+			s.Format(_T("%08X"), addr);
+			m_lstAddressTemp.SetItemText(index, 0, s);
 		}
 	}
-	*/
-
+	m_pProcess.SetPos(0);
+__End:
 	//恢复按钮 可用状态
 	pBtnFirst->EnableWindow(TRUE);
 	m_bGoon = false;//搜索标志
@@ -763,9 +765,9 @@ void CMemoryCheatDlg::OnBnClickedButtonNext()
 		default:
 			break;
 	}
-	if(bFind)
+	if(!bFind)
+		goto __End;
 	{
-		
 		const std::list<DWORD>& lst = m_pFinder->GetResults();
 		int index = 1024;//显示的最大数
 		for(auto addr : lst)
@@ -777,9 +779,10 @@ void CMemoryCheatDlg::OnBnClickedButtonNext()
 			s.Format(_T("%08X"), addr);
 			m_lstAddressTemp.SetItemText(index, 0, s);
 		}
-		//进度条清0
-		m_pProcess.SetPos(0);
 	}
+	//进度条清0
+	m_pProcess.SetPos(0);
+__End:
 	//恢复按钮 可用状态
 	pBtnNext->EnableWindow(TRUE);
 	m_bGoon = false;//搜索标志

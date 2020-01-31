@@ -70,6 +70,7 @@ namespace hh
 			else
 				hico = info.hIcon;
 		}
+		return hico != 0;
 	}
 }
 

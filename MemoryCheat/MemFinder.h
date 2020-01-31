@@ -82,7 +82,8 @@ public:
 	//调用Call
 	bool RmoteCall(unsigned char code[], size_t len, unsigned char para[], size_t paraLen)
 	{
-		if(!IsValidHandle());
+		if(!IsValidHandle())
+			return false;
 		//申请代码内存
 		PVOID mFuncAddr = ::VirtualAllocEx(m_hProcess, NULL, len, MEM_COMMIT, PAGE_EXECUTE_READWRITE);
 		if(nullptr == mFuncAddr)
