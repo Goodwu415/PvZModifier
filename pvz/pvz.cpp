@@ -3,6 +3,7 @@
 
 #include "stdafx.h"
 #include "pvz.h"
+#include "CDialogMain.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -52,12 +53,83 @@ CpvzApp::CpvzApp()
 
 CpvzApp theApp;
 
+#define GAME_WIN_NAME _T("植物大战僵尸中文版")
 
+HHOOK g_hHook;
+//辅助对话框
+CDialogMain* g_pDlg{ nullptr };
 // CpvzApp 初始化
 
 BOOL CpvzApp::InitInstance()
 {
 	CWinApp::InitInstance();
 
+	if(!AfxSocketInit()){
+		AfxMessageBox(IDP_SOCKETS_INIT_FAILED);
+		return FALSE;
+	}
 	return TRUE;
+}
+
+static bool IsFullScreenWindow(HWND hWnd)
+{
+	bool bFullScreen = false;
+	RECT rcApp, rcDesk;
+	GetWindowRect(GetDesktopWindow(), &rcDesk);
+	if(hWnd != GetDesktopWindow() && hWnd != GetShellWindow())
+	{
+		GetWindowRect(hWnd, &rcApp);
+		if(rcApp.left <= rcDesk.left
+			&& rcApp.top <= rcDesk.top
+			&& rcApp.right >= rcDesk.right
+			&& rcApp.bottom >= rcDesk.bottom)
+		{
+			bFullScreen = true;
+		}
+	}
+	return bFullScreen;
+}
+
+LRESULT WINAPI KeyboardProc(int code, WPARAM wParam, LPARAM lParam)
+{
+	if(code == HC_ACTION && wParam == VK_HOME && GetKeyState(VK_HOME) < 0)
+	{
+		if(!g_pDlg)
+		{
+			//创建窗口
+			g_pDlg = new CDialogMain;
+			g_pDlg->Create(IDD_DIALOG1);
+			
+			HWND hWndGame = ::FindWindow(NULL, GAME_WIN_NAME);
+			if(!IsFullScreenWindow(hWndGame))
+			{
+				SetWindowPos(hWndGame, HWND_TOP, 0 + 10, 0 + 10, -1, -1, SWP_NOSIZE);
+				RECT rcGame;
+				::GetWindowRect(hWndGame, &rcGame);
+				::SetWindowPos(g_pDlg->GetSafeHwnd(), HWND_TOP, rcGame.right + 0, 10,
+					-1, -1, SWP_NOSIZE);
+			} else
+			{
+				AfxMessageBox(_T("去掉游戏 “全屏”设置"));
+			}
+		}
+		g_pDlg->ShowWindow(SW_SHOW);
+		return 0;
+	} else
+		return CallNextHookEx(NULL, code, wParam, lParam);
+}
+
+void __stdcall SetHook()
+{
+	HWND hWndGame;
+	hWndGame = ::FindWindow(NULL, GAME_WIN_NAME);
+
+	DWORD dwProcessId, dwThreadId;
+	dwThreadId = ::GetWindowThreadProcessId(hWndGame, &dwProcessId);
+
+	g_hHook = ::SetWindowsHookEx(WH_KEYBOARD,	//键盘钩子
+		KeyboardProc,	//钩子过程
+		GetModuleHandle(_T("pvz.dll")),//钩子函数所在的模块
+		dwThreadId);//游戏窗口线程ID
+
 }

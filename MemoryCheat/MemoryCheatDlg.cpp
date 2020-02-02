@@ -20,8 +20,8 @@ static int range = 100;
 //首次扫描回调函数
 bool __stdcall FirstSearchRoutine(void* pArgs, size_t nPageCount, size_t index)
 {
-	//CProgressCtrl *p = (CProgressCtrl*)pArgs;
-	CProgressCtrl *p = static_cast<CProgressCtrl*>(pArgs);
+	CProgressCtrl *p = (CProgressCtrl*)pArgs;
+	//CProgressCtrl *p = static_cast<CProgressCtrl*>(pArgs);
 	if(nPageCount == 0)
 		return *g_pGoon;
 	p->SetPos(static_cast<int>(index / (nPageCount / float(range))));
@@ -44,8 +44,8 @@ CMemoryCheatDlg::CMemoryCheatDlg(CWnd* pParent /*=nullptr*/)
 	: CDialogEx(IDD_MEMORYCHEAT_DIALOG, pParent)
 	, m_strSearchValue(_T(""))
 	, m_strValueType(_T(""))
-	, m_strLimitBegin(_T(""))
-	, m_strLimitEnd(_T(""))
+	, m_strLimitBegin(_T("0x00000000"))
+	, m_strLimitEnd(_T("0x7FFFffff"))
 	, m_strDesEdit(_T(""))
 	, m_strValueTypeEdit(_T(""))
 	, m_strValueEdit(_T(""))
