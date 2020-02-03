@@ -65,47 +65,64 @@ BOOL CDialogMain::OnInitDialog()
 	CDialogEx::OnInitDialog();
 	SetIcon(m_hIcon, TRUE);
 	SetIcon(m_hIcon, FALSE);
-	{//确定按钮状态
-		{//去掉植物CD
+	// 确定按钮状态
+	{
+
+		// 去掉植物CD
+		{
 			const DWORD dwBaseAddr = 0x00488250;
 			const DWORD dwBaseAddr2 = 0x00488688;
 			bool b1 = false, b2 = false;
-			{//亮暗控制
+			// 亮暗控制
+			{
 				const unsigned char code[] = { 0xEB, 0x24 };
 				b1 = CompareCode(dwBaseAddr, code, _countof(code));
 			}
-			{//可点击控制
+			// 可点击控制
+			{
 				const unsigned char code[] = { 0xE9, 0x7A, 0x01, 0x00, 0x00, 0x90 };
 				b2 = CompareCode(dwBaseAddr2, code, _countof(code));
 			}
-			if(b1 && b2)
+			if(b1 && b2) {
 				SetDlgItemText(IDC_BUTTON_NOCD, _T("无CD(恢复)"));
-			else
+			} else {
 				SetDlgItemText(IDC_BUTTON_NOCD, _T("无CD"));
+			}
 		}
-	
-		{//重叠种植
+
+		// 重叠种植
+		{
 			const DWORD dwBaseAddr = 0x0040FE2F;
-			//是否可以防止植物
+
+			// 是否可以放置植物
 			const unsigned char code[] = { 0xE9, 0x20, 0x09, 0x00, 0x00, 0x90 };
-			if(CompareCode(dwBaseAddr, code, _countof(code)))
+			if(CompareCode(dwBaseAddr, code, _countof(code))) {
 				SetDlgItemText(IDC_BUTTON_ANYWHERE, _T("重叠种植(恢复)"));
-			else
+			} else {
 				SetDlgItemText(IDC_BUTTON_ANYWHERE, _T("重叠种植"));
+			}
 		}
-		{//自动收集阳光
+
+		// 自动收集阳光
+		{
 			const DWORD dwBaseAddr = 0x0043158F;
+			// 判断是否点击阳光，金钱，
 			const unsigned char code[] = { 0x74, 0x08 };
-			if(CompareCode(dwBaseAddr, code, _countof(code)))
+			if(CompareCode(dwBaseAddr, code, _countof(code))) {
 				SetDlgItemText(IDC_BUTTON_AUTO_COLLECT, _T("自动收集(恢复)"));
-			else
+			} else {
+
 				SetDlgItemText(IDC_BUTTON_AUTO_COLLECT, _T("自动收集阳光金钱"));
+			}
 		}
+
 		UpdateData(FALSE);
 	}
-	//初始化列表
+
+	// 初始化列表
 	{
-		{//所有植物
+		// 所有植物
+		{
 			CString str[] = { _T(" 0:豌豆射手"), _T(" 1:向日葵"), _T(" 2:樱桃炸弹"), _T(" 3:坚果墙"),
 							  _T(" 4:土豆雷"), _T(" 5:寒冰射手"), _T(" 6:大嘴花"), _T(" 7:双发射手"),
 
@@ -126,8 +143,10 @@ BOOL CDialogMain::OnInitDialog()
 
 							  _T("48:模仿者"), _T("49:爆炸坚果"), _T("50:巨大坚果墙")
 			};
-			for(auto s : str)
+			for(auto s : str) {
 				m_comboPlants.AddString(s);
+			}
+
 			m_comboPlants.SetCurSel(0);
 		}
 		// 被模仿植物
@@ -158,14 +177,16 @@ BOOL CDialogMain::OnInitDialog()
 			}
 			m_comboPlants2.SetCurSel(0);
 		}
-		//行
-		for(int x = 0; x <= 5; ++x)
-		{
+
+
+		// 行:最多6行
+		for(int x = 0; x <= 5; ++x) {
 			CString str;
 			str.Format(_T("%d"), x);
 			m_comboCropX.AddString(str.GetString());
 		}
 		m_comboCropX.SetCurSel(0);
+
 		// 列:最多9列
 		for(int y = 0; y <= 8; ++y) {
 			CString str;
@@ -181,14 +202,14 @@ BOOL CDialogMain::OnInitDialog()
 //写内存：修改代码
 static bool WriteCode(DWORD dwAddr, const unsigned char code[], size_t len)
 {
-	DWORD dwOld{ 0 };
-	if(!VirtualProtect((LPVOID)dwAddr, len, PAGE_EXECUTE_READWRITE, &dwAddr))
+	DWORD dwOld;
+	if(!VirtualProtect((LPVOID)dwAddr, len, PAGE_EXECUTE_READWRITE, &dwOld))
 	{
 		return false;
 	}
 	memcpy_s((void*)dwAddr, len, code, len);
-	DWORD dwNew{ 0 };
-	if(VirtualProtect((LPVOID)dwAddr, len, dwOld, &dwAddr))
+	DWORD dwNew;
+	if(VirtualProtect((LPVOID)dwAddr, len, dwOld, &dwNew))
 		return true;
 	return false;
 }
@@ -238,17 +259,13 @@ void CDialogMain::OnBnClickedButtonAnywhere()
 	GetDlgItemText(IDC_BUTTON_ANYWHERE, str);
 	if(str == _T("重叠种植")) {
 		// 是否可以放置植物
-		{
-			const unsigned char code[] = { 0xE9, 0x20, 0x09, 0x00, 0x00, 0x90 };
-			WriteCode(dwBaseAddr, code, _countof(code));
-		}
+		const unsigned char code[] = { 0xE9, 0x20, 0x09, 0x00, 0x00, 0x90 };
+		WriteCode(dwBaseAddr, code, _countof(code));
 		SetDlgItemText(IDC_BUTTON_ANYWHERE, _T("重叠种植(恢复)"));
 	} else {
 		// 是否可以放置植物
-		{
-			const unsigned char code[] = { 0x0F, 0x84, 0x1F, 0x09, 0x00, 0x00 };
-			WriteCode(dwBaseAddr, code, _countof(code));
-		}
+		const unsigned char code[] = { 0x0F, 0x84, 0x1F, 0x09, 0x00, 0x00 };
+		WriteCode(dwBaseAddr, code, _countof(code));
 		SetDlgItemText(IDC_BUTTON_ANYWHERE, _T("重叠种植"));
 	}
 }
@@ -262,17 +279,13 @@ void CDialogMain::OnBnClickedButtonAutoCollect()
 	GetDlgItemText(IDC_BUTTON_AUTO_COLLECT, str);
 	if(str == _T("自动收集阳光金钱")) {
 		// 判断是否点击阳光，金钱，
-		{
-			const unsigned char code[] = { 0x74, 0x08 };
-			WriteCode(dwBaseAddr, code, _countof(code));
-		}
+		const unsigned char code[] = { 0x74, 0x08 };
+		WriteCode(dwBaseAddr, code, _countof(code));
 		SetDlgItemText(IDC_BUTTON_AUTO_COLLECT, _T("自动收集(恢复)"));
 	} else {
-		// 判断是否点击阳光，金钱，
-		{
-			const unsigned char code[] = { 0x75, 0x08 };
-			WriteCode(dwBaseAddr, code, _countof(code));
-		}
+	// 判断是否点击阳光，金钱，
+		const unsigned char code[] = { 0x75, 0x08 };
+		WriteCode(dwBaseAddr, code, _countof(code));
 		SetDlgItemText(IDC_BUTTON_AUTO_COLLECT, _T("自动收集阳光金钱"));
 	}
 }
@@ -284,16 +297,12 @@ void CDialogMain::OnBnClickedButtonAllZombies()
 	CString str;
 	GetDlgItemText(IDC_BUTTON_ALL_ZOMBIES, str);
 	if(str == _T("僵尸全部出动")) {
-		{
-			const unsigned char code[] = { 0x90, 0x90, 0x90, 0x90, 0x90, 0x90 };
-			WriteCode(dwBaseAddr, code, _countof(code));
-		}
+		const unsigned char code[] = { 0x90, 0x90, 0x90, 0x90, 0x90, 0x90 };
+		WriteCode(dwBaseAddr, code, _countof(code));
 		SetDlgItemText(IDC_BUTTON_ALL_ZOMBIES, _T("僵尸全部出动(恢复)"));
 	} else {
-		{
-			const unsigned char code[] = { 0x0F, 0x85, 0x0D, 0x01, 0x00, 0x00 };
-			WriteCode(dwBaseAddr, code, _countof(code));
-		}
+		const unsigned char code[] = { 0x0F, 0x85, 0x0D, 0x01, 0x00, 0x00 };
+		WriteCode(dwBaseAddr, code, _countof(code));
 		SetDlgItemText(IDC_BUTTON_ALL_ZOMBIES, _T("僵尸全部出动"));
 	}
 }
@@ -331,9 +340,9 @@ void CDialogMain::OnBnClickedButtonGold()
 	// [[0x006A9EC0] + 0x82C] + 0x28
 
 	DWORD dwTemp;
-	dwTemp = *(DWORD *)0x006A9EC0;
-	dwTemp = *(DWORD *)(0x82C + dwTemp);
-	// 内存地址
+	dwTemp = *(DWORD *)0x006A9EC0;//一级指针指向的值
+	dwTemp = *(DWORD *)(0x82C + dwTemp);//二级指针指向的值
+	// 金钱临时的内存地址
 	DWORD dwAddr = 0x28 + dwTemp;
 
 	// 写入新的金钱数量
